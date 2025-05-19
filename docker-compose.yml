@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  fastapi:
+    container_name: fastapi
+    image: fastapi
+    build: .
+    environment:
+      - OPENWEATHER_API_KEY=<API_KEY>
+    ports:
+      - "8000:8000"
