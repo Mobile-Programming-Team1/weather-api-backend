@@ -28,7 +28,7 @@ async def get_weather(city: str, start_date: str, end_date: str):
         for timestamp in timestamps:
             data = {}
 
-            if(timestamp > get_future_utc_timestamp(4)):
+            if(timestamp > get_future_utc_timestamp(4, "days")):
                 timestamp = one_year_ago_timestamp(timestamp)
             
             data = await fetch_from_timemachine(client, url, city_location, timestamp)

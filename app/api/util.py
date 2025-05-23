@@ -66,10 +66,18 @@ def get_utc_offset(city_lat, city_lon):
 def get_current_utc_timestamp():
     return int(datetime.now(timezone.utc).timestamp())
 
-def get_future_utc_timestamp(days):
-    future = datetime.now(timezone.utc) + timedelta(days=4)
+def get_future_utc_timestamp(offset, mode: str):
+    if(mode == "days"):
+        future = datetime.now(timezone.utc) + timedelta(days=offset)
+    elif(mode == "hours"):
+        future = datetime.now(timezone.utc) + timedelta(hours=offset)
     return int(future.timestamp())
 
+def get_future_utc_timestamp_from(timestamp, offset, mode: str = "hours"):
+    dt = datetime.utcfromtimestamp(timestamp)
+    if(mode == "hours"):
+        future = dt + relativedelta(hours=offset)
+    return int(future.timestamp())
 
 def one_year_ago_timestamp(timestamp: int) -> int:
     dt = datetime.utcfromtimestamp(timestamp)
