@@ -34,3 +34,7 @@ uvicorn app.main:app --reload
 
 다음 경로에서 Swagger가 제대로 나오는지 확인합니다.  
 [http:127.0.0.1:8000/docs](http:127.0.0.1:8000/docs)
+
+## 참고. 오류나 버그 발생시
+
+프로젝트 디렉토리 아래의 app.log파일을 공유해 주세요.
