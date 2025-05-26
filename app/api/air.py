@@ -1,5 +1,3 @@
-
-
 from fastapi import APIRouter, HTTPException
 import httpx
 from ..model import AirResponse
@@ -7,8 +5,10 @@ from ..environ import OPENWEATHER_API_KEY
 from ..loader import CITIES_DATA
 from .util import get_local_noon_utc_timestamps, convert_to_kst_date, get_coordinates_by_city_name, get_utc_offset, get_noon_utc_timestamp, get_first_last_with_length
 from .util import one_year_after_timestamp_tz, one_year_ago_timestamp_tz, get_timezone, get_future_utc_timestamp_from, split_sorted_list_bisect
+import logging
 
 router = APIRouter()
+
 
 @router.post("/air/", response_model=AirResponse)
 async def get_air(city: str, start_date: str, end_date: str):
@@ -31,13 +31,13 @@ async def get_air(city: str, start_date: str, end_date: str):
         # 오늘의 UTC timestamp
         today_noon_utc = get_noon_utc_timestamp(city_utc_offset)
 
-        print("today_noon_utc", today_noon_utc)
+        logging.info(f"today_noon_utc: {today_noon_utc}")
 
         # 1. history data가 필요한 경우 (오늘 이전인 경우) - 4일 이내의 경우
         # 2. 4일 이후인 경우
         utc_before, utc_after = split_sorted_list_bisect(timestamps, get_future_utc_timestamp_from(today_noon_utc, 5, "days"))
-        print("utc_before", utc_before)
-        print("utc_after", utc_after)
+        logging.info(f"utc_before: {utc_before}")
+        logging.info(f"utc_after: {utc_after}")
 
         # 4일 이후의 정오 TimeStamp - A를 구한다.
         # timestamps를 A이하와 A 초과로 구분한다.
@@ -46,8 +46,8 @@ async def get_air(city: str, start_date: str, end_date: str):
 
         # 각 Timestamp마다 API 호출 + 결과를 data_all에 저장
         start, end = get_first_last_with_length(utc_before)
-        print("start", start)
-        print("end", end)
+        logging.info(f"before_start: {start}")
+        logging.info(f"before_end: {end}")
 
         if(start and end != None):
             data =  await fetch_from_history(client, city_location, start, end)
@@ -62,8 +62,8 @@ async def get_air(city: str, start_date: str, end_date: str):
         # utc_after를 일년전 timestamp로 변환환
         utc_after = [one_year_ago_timestamp_tz(timestamp, city_timezone) for timestamp in utc_after]
         start, end = get_first_last_with_length(utc_after)
-        print("after_start", start)
-        print("after_end", end)
+        logging.info(f"after_start: {start}")
+        logging.info(f"after_end: {end}")
 
         if(start and end != None):
             data =  await fetch_from_history(client, city_location, start, end)
@@ -93,7 +93,7 @@ async def fetch_from_history(client, city_location, start, end):
         "end": end,
         "appid": OPENWEATHER_API_KEY,
     }
-    print(f'url: {url}?lat={city_location["lat"]}&lon={city_location["lon"]}&start={start}&end={end}&appid={OPENWEATHER_API_KEY}')
+    logging.info(f'url: {url}?lat={city_location["lat"]}&lon={city_location["lon"]}&start={start}&end={end}&appid={OPENWEATHER_API_KEY}')
         
     response = await client.get(url, params=params)
     response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
