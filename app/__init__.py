@@ -1,1 +1,1 @@
-from .api import router_weather, router_city
+from .api import router_weather, router_city, router_air
