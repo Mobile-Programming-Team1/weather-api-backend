@@ -15,8 +15,9 @@ import logging
 router = APIRouter()
 recommend_cities = ["Busan", "Gwangju", "Daejeon", "Kyoto", "Barcelona", "Rome", "Sydney", "Paris"]
 
-@router.get("/recommendation", response_model=RecommCityResponse)
-async def get_recommend_cities(weather: str, date: str = Query(description="ex) 20250105")):
+@router.get("/recommendation", response_model=RecommCityResponse, description="Busan, Gwangju, Deajeon, Kyoto, Barcelona, Rome, Sydney, Paris 중 검색한 날씨, 날짜에 해당하는 도시들의 이름을 반환합니다.")
+async def get_recommend_cities(weather: str = Query(description="Thunderstorm, Drizzle, Rain, Snow, Mist, Smoke, Haze, Dust, Fog, Sand, Dust, Ash, Squall, Tornado, Clear, Clouds"), 
+                               date: str = Query(description="ex) 20250105")):
     client = httpx.AsyncClient(timeout=30.0)
     url = f"https://api.openweathermap.org/data/3.0/onecall/timemachine"
     
