@@ -12,6 +12,7 @@ router = APIRouter()
 
 @router.post("/air/", response_model=AirResponse, description="특정 날짜, 특정 도시의 공기질을 1~5까지의 숫자로 반환합니다. 1이 매우 좋음, 5가 매우 나쁨입니다.")
 async def get_air(city: str, start_date: str, end_date: str):
+    logging.info(f'air request: city = {city}, start_date = {start_date}, end_date = {end_date}')
 
     try:
         client = httpx.AsyncClient(timeout=30.0)

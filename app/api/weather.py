@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post("/weather/", response_model=WeatherResponse)
 async def get_weather(city: str, start_date: str, end_date: str):
-
+    logging.info(f'weather request: city = {city}, start_date = {start_date}, end_date = {end_date}')
     try:
         client = httpx.AsyncClient(timeout=30.0)
         url = f"https://api.openweathermap.org/data/3.0/onecall/timemachine"
