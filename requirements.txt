@@ -3,3 +3,4 @@ pydantic>=2.7.0,<3.0.0
 timezonefinder==6.5.9
 pandas==2.2.3
 schedule==1.2.2
+firebase_admin==6.8.0

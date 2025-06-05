@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from app import router_weather, router_city, router_air, router_token, router_recomm
 from app import scheduled_task
 import logging
-import schedule
+import firebase_admin
+from firebase_admin import credentials, messaging, firestore
+from .weather_checker import schedule_weather_checker
 
 logging.basicConfig(
     filename='app.log',  # 로그 파일명
@@ -21,6 +23,11 @@ app.include_router(router_city, tags=["city"])
 app.include_router(router_air, tags=["air"])
 app.include_router(router_token, tags=["token"])
 app.include_router(router_recomm, tags=["recommend"])
+
+
+
+
+schedule_weather_checker()
 
 # 스케줄링
 # schedule.every().day.at("10:30").do(scheduled_task)
