@@ -21,7 +21,12 @@ def schedule_weather_checker():
     )
     firebase_admin.initialize_app(firebase_credential)
     firebase_db = firestore.client()
-    schedule.every(1).minutes.do(check_and_notify)
+    print("scheduled!!")
+    schedule.every(10).seconds.do(check_and_notify)
+
+    while True:  
+        schedule.run_pending()
+        time.sleep(10)
 
 def get_real_weather(city: str, date_str: str) -> str:
     base_url = "http://localhost:8000/weather/"
@@ -30,7 +35,7 @@ def get_real_weather(city: str, date_str: str) -> str:
         "city": city,
         "start_date": date_nohyphen,
         "end_date": date_nohyphen,
-        "appid": API_KEY
+   #     "appid": afad7c87ebd1b14f5287168defd8d921
     }
 
     print(f"→ [DEBUG] 호출 URL: {base_url} params={params}")
@@ -72,40 +77,46 @@ def send_fcm_v1(token: str, title: str, body: str) -> None:
 
 def check_and_notify():
     print("🔍 날씨 비교 시작: ", datetime.now().isoformat())
-    docs = firebase_db.collection("plans").stream()
-    docs_list = list(docs)
-    print(f"🔄 총 처리할 문서 수: {len(docs_list)}")
 
-    # ← 여기서부터 수동으로 사용할 FCM 토큰을 지정하세요.
-    token = "d9HFDFKWRcWmgz8x7KrxrJ:APA91bEJ_lp6_5Eec95xx9kQGm1AredF20vXScSG8StvFbs4bWi12OlDkKFiZB3Fltd42oPFUASuPMXND5DNunGcUQjzO6qrkmNs6zj5Rnq5SRP4__nQk_s"
+    users_ref = firebase_db.collection("users").stream()
 
-    for doc in docs_list:
-        data = doc.to_dict()
-        print(f"📦 plans 문서 내용: {data}")
+    for user_doc in users_ref:
+        user_id = user_doc.id
+        user_data = user_doc.to_dict()
+        token = user_data.get("token")
 
-        destination = data.get("destination")
-        weather_list = data.get("weather", [])
-        if not destination or not weather_list:
+        if not token:
             continue
 
-        expected_list = []
-        for item in weather_list:
-            date_str = item.get("date")
-            cond = item.get("condition")
-            if date_str and cond:
-                expected_list.append((date_str, cond.upper()))
+        print(f"🧾 사용자 문서: {user_id}")
+        print(f"🔑 해당 사용자 토큰: {token}")
 
-        for date_str, expected_cond in expected_list:
-            time.sleep(1.1)  # OpenWeatherMap API 호출 제한을 피하기 위해
-            city_input = destination.strip().title()
-            actual_cond = get_real_weather(city_input, date_str)
-            if expected_cond.lower() != actual_cond.lower():
-                print(f"❗차이 발생: {destination} | {date_str} | 예상: {expected_cond}, 실제: {actual_cond}")
-                title = f"{date_str} 날씨 변경"
-                body = f"{destination}의 날씨가 예상({expected_cond})과 달라요! 실제: {actual_cond}"
-                send_fcm_v1(token, title, body)
-            else:
-                print(f"✅ 일치: {destination} | {date_str} | {expected_cond}")
+        trips_ref = firebase_db.collection("users").document(user_id).collection("trips").stream()
+
+        for trip_doc in trips_ref:
+            trip_data = trip_doc.to_dict()
+            print(f"📦 trip 문서 내용: {trip_data}")
+
+            destination = trip_data.get("destination")
+            weather_list = trip_data.get("weather", [])
+
+            for item in weather_list:
+                date_str = item.get("date")
+                expected_cond = item.get("condition", "").upper()
+
+                if not destination or not date_str or not expected_cond:
+                    continue
+
+                time.sleep(1.1)  # API 제한 고려
+                actual_cond = get_real_weather(destination, date_str)
+
+                if expected_cond.lower() != actual_cond.lower():
+                    print(f"❗차이 발생: {destination} | {date_str} | 예상: {expected_cond}, 실제: {actual_cond}")
+                    title = f"[날씨 변화] {destination} - {date_str}"
+                    body = f"예상: {expected_cond}, 실제: {actual_cond}"
+                    send_fcm_v1(token, title, body)
+                else:
+                    print(f"✅ 일치: {destination} | {date_str} | {expected_cond}")
 
     print("✅ 날씨 비교 완료: ", datetime.now().isoformat())
 
