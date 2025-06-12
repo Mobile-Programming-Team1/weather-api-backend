@@ -2,8 +2,7 @@ from fastapi import FastAPI
 from app import router_weather, router_city, router_air, router_token, router_recomm
 from app import scheduled_task
 import logging
-import firebase_admin
-from firebase_admin import credentials, messaging, firestore
+import threading
 from .weather_checker import schedule_weather_checker
 
 logging.basicConfig(
@@ -27,7 +26,9 @@ app.include_router(router_recomm, tags=["recommend"])
 
 
 
-schedule_weather_checker()
 
-# 스케줄링
-# schedule.every().day.at("10:30").do(scheduled_task)
+@app.on_event("startup")
+async def startup_event():
+    # 백그라운드 스레드에서 스케줄러 실행
+    scheduler_thread = threading.Thread(target=schedule_weather_checker, daemon=True)
+    scheduler_thread.start()
